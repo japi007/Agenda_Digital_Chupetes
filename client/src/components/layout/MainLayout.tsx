@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'teacher' | 'parent';
+  requiredRole?: string | string[];
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredRole }) => {
@@ -48,9 +48,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredRole }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
-    console.log(`MainLayout: User role ${user.role} doesn't match required role ${requiredRole}`);
-    return <Navigate to="/unauthorized" replace />;
+  // Check if user has required role
+  if (requiredRole) {
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!allowedRoles.includes(user.role)) {
+      console.log(`MainLayout: User role ${user.role} doesn't match required roles [${allowedRoles.join(', ')}]`);
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return (
@@ -58,7 +62,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredRole }) => {
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex flex-1 pt-16">
         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <main className={`flex-1 p-6 transition-all duration-300 ${isMobile ? 'w-full' : 'md:ml-64'}`}>
+        <main className={`flex-1 p-6 transition-all duration-300 ${isMobile ? 'w-full' : (isSidebarOpen ? 'md:ml-64' : 'md:ml-0')}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

@@ -81,7 +81,7 @@ router.put('/:id', protect, async (req, res) => {
     }
     
     // Extract fields to update
-    const { firstName, lastName, email, username } = req.body;
+    const { firstName, lastName, email, username, role } = req.body;
     
     // Check if username is being changed and already exists
     if (username && username !== user.username) {
@@ -99,12 +99,16 @@ router.put('/:id', protect, async (req, res) => {
       }
     }
     
+    // Only allow role changes if the requester is an admin
+    const updatedRole = req.user.role === 'admin' ? (role || user.role) : user.role;
+    
     // Update user
     await user.update({
       firstName: firstName || user.firstName,
       lastName: lastName || user.lastName,
       email: email || user.email,
-      username: username || user.username
+      username: username || user.username,
+      role: updatedRole
     });
     
     // Return updated user without password
@@ -123,6 +127,9 @@ router.put('/:id', protect, async (req, res) => {
 // Change password
 router.put('/:id/password', protect, async (req, res) => {
   try {
+    console.log('Password update request received:', req.params.id);
+    console.log('Current user:', req.user.id, req.user.role);
+    
     // Check if user is updating their own password or is an admin
     if (req.user.id !== parseInt(req.params.id) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to change this user\'s password' });
@@ -136,11 +143,20 @@ router.put('/:id/password', protect, async (req, res) => {
     
     const { currentPassword, newPassword } = req.body;
     
-    // Verify current password
-    const isMatch = await user.checkPassword(currentPassword);
-    if (!isMatch){
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
+    console.log('Password update data received:', { 
+      hasCurrentPassword: !!currentPassword, 
+      hasNewPassword: !!newPassword 
+    });
+    
+    // If admin is changing another user's password, bypass current password check
+    const bypassCheck = req.user.role === 'admin' && req.user.id !== user.id;
+    
+    if (!bypassCheck) {
+      // Verify current password for non-admin users or admins changing their own password
+      const isMatch = await user.checkPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
     }
     
     // Update password

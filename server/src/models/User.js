@@ -1,6 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
-import sequelize from '../config/database.js';
+import { sequelize } from '../config/database.js';
 
 class User extends Model {
   async checkPassword(password) {

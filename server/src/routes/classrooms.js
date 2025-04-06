@@ -1,8 +1,36 @@
 import express from 'express';
-import Classroom from '../models/Classroom.js';
+import { sequelize } from '../config/database.js';
+import { DataTypes } from 'sequelize';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Define Classroom model if not already defined
+const Classroom = sequelize.define('Classroom', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  capacity: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  ageGroup: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+}, {
+  timestamps: true
+});
 
 // Get all classrooms
 router.get('/', protect, async (req, res) => {

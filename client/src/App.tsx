@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import MainLayout from './components/layout/MainLayout';
 import LoginForm from './components/auth/LoginForm';
 import Dashboard from './pages/Dashboard';
 import Unauthorized from './pages/Unauthorized';
@@ -8,6 +9,7 @@ import Unauthorized from './pages/Unauthorized';
 // Admin pages
 import AdminProfile from './pages/admin/Profile';
 import AdminUsers from './pages/admin/Users';
+import AdminStudents from './pages/admin/Students';
 
 // Teacher pages
 import TeacherProfile from './pages/teacher/Profile';
@@ -17,20 +19,17 @@ import ParentProfile from './pages/parent/Profile';
 
 // Protected route component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const token = localStorage.getItem('token');
+  
+  if (!user || !token) {
+    return <Navigate to="/" replace />;
   }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
-
+  
   return <>{children}</>;
 };
 
@@ -39,62 +38,69 @@ const App: React.FC = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={<LoginForm />} />
+          {/* Public routes */}
+          <Route path="/" element={<LoginForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
-          {/* Dashboard - accessible to all authenticated users */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'teacher', 'parent']}>
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute allowedRoles={[]}>
+              <MainLayout>
                 <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
           
           {/* Admin routes */}
-          <Route 
-            path="/admin/profile" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
+          <Route path="/admin/profile" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MainLayout>
                 <AdminProfile />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/users" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              </MainLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MainLayout>
                 <AdminUsers />
-              </ProtectedRoute>
-            } 
-          />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/students" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MainLayout>
+                <AdminStudents />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
           
           {/* Teacher routes */}
-          <Route 
-            path="/teacher/profile" 
-            element={
-              <ProtectedRoute allowedRoles={['teacher']}>
+          <Route path="/teacher/profile" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <MainLayout>
                 <TeacherProfile />
-              </ProtectedRoute>
-            } 
-          />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/teacher/students" element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <MainLayout>
+                <AdminStudents />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
           
           {/* Parent routes */}
-          <Route 
-            path="/parent/profile" 
-            element={
-              <ProtectedRoute allowedRoles={['parent']}>
+          <Route path="/parent/profile" element={
+            <ProtectedRoute allowedRoles={['parent']}>
+              <MainLayout>
                 <ParentProfile />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Redirect root to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          
-          {/* Catch all - redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </AuthProvider>

@@ -3,9 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sequelize from './config/database.js';
+import { sequelize } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
+import studentRoutes from './routes/students.js';
+import classroomRoutes from './routes/classrooms.js';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +30,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/classrooms', classroomRoutes);
 
 // Test route
 app.get('/', (req, res) => {
